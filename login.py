@@ -75,6 +75,7 @@ def isValidEmails(driver, inputEmails):
 			time.sleep(2)
 			pass
 		driver.find_element_by_xpath("//textarea[@name='to']").send_keys(Keys.BACKSPACE)
+		time.sleep(1)
 
 	return validEmails
 

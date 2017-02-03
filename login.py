@@ -6,47 +6,17 @@ from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import NoSuchElementException
 import time
 import settings
+import tor
 
 def testEmails(inputEmails):
-	#Use the correct google user profile for chrome
-	options = Options()
-	options.add_argument("user-data-dir=/Users/andersonhatcherthomas/Library/Application\ Support/Google/Chrome/Profile\ 1")
-	driver = webdriver.Chrome(chrome_options=options)
-
-	driver.set_window_size(1120, 550)
-	driver.implicitly_wait(50)
-
-	print("Loading login page...")
-
-	#Go to the login page, will likely be already logged in
-	driver.get("https://accounts.google.com/ServiceLogin?service=mail#identifier")
-	driver.set_window_size(1000, 800)
-	time.sleep(4)
-
-	#Test if we are already logged in, if we are we will only need to reenter our password.
-	try:
-		driver.find_element_by_xpath("//h2[contains(text(), 'Please re-enter your password')]")
-		print("Found re-enter password...")
-    #We are not already logged in, lets login
-	except NoSuchElementException:
-		print("Found no such element exception")
-		usernametext = driver.find_element_by_name('Email')
-		usernametext.send_keys(settings.email)
-		time.sleep(3)
-		driver.find_element_by_name('signIn').click()
-		pass
-    
-	#The driver has identified the password box and will enter the password
-	passwordtext = driver.find_element_by_name('Passwd') \
-							 	.send_keys([settings.password, Keys.RETURN])
-	print("Signed in. Going to sleep...")
-
+	tor.startTor
+	driver = startChromeDriver()
+	loginToGmail(driver)
 
 
 	#Time to sleep a little, allow the driver to login
 	time.sleep(23)
 	print("Waking up. Going to compose message...")
-
 	#Find the compose button
 	driver.find_element_by_xpath("//div[contains(text(),'COMPOSE')]").click()
 
@@ -79,4 +49,37 @@ def isValidEmails(driver, inputEmails):
 
 	return validEmails
 
+def startChromeDriver():
+	#Use the correct google user profile for chrome
+	options = Options()
+	options.add_argument("user-data-dir=/Users/andersonhatcherthomas/Library/Application\ Support/Google/Chrome/Profile\ 1")
+	options.add_argument("'--proxy-server=http://emailfinder:'+tor.SOCKS_PORT")
+	driver = webdriver.Chrome(chrome_options=options)
+	driver.set_window_size(1120, 550)
+	driver.implicitly_wait(50)
+	print("Loading login page...")
+	return driver
 
+def loginToGmail(driver):
+	#Go to the login page, will likely be already logged in
+	driver.get("https://accounts.google.com/ServiceLogin?service=mail#identifier")
+	driver.set_window_size(1000, 800)
+	time.sleep(4)
+
+	#Test if we are already logged in, if we are we will only need to reenter our password.
+	try:
+		driver.find_element_by_xpath("//h2[contains(text(), 'Please re-enter your password')]")
+		print("Found re-enter password...")
+    #We are not already logged in, lets login
+	except NoSuchElementException:
+		print("Found no such element exception")
+		usernametext = driver.find_element_by_name('Email')
+		usernametext.send_keys(settings.email)
+		time.sleep(3)
+		driver.find_element_by_name('signIn').click()
+		pass
+    
+	#The driver has identified the password box and will enter the password
+	passwordtext = driver.find_element_by_name('Passwd') \
+							 	.send_keys([settings.password, Keys.RETURN])
+	print("Signed in. Going to sleep...")
